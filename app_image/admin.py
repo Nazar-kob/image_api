@@ -1,15 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from image.models import Image, Tier, User
+from app_image.models import Tier, User, OriginalLink
 
-admin.site.register(Image)
+admin.site.register(OriginalLink)
 admin.site.register(Tier)
 
 
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
-    list_display = UserAdmin.list_display + ("tier",)
+    list_display = ("username", "tier")
 
     fieldsets = UserAdmin.fieldsets + (
         (("Additional info", {"fields": ("tier",)}),)

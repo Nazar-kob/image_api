@@ -38,7 +38,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
 
-    'image',
+    'app_image',
 
 ]
 
@@ -54,7 +54,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'project_image.urls'
 
-LOGIN_REDIRECT_URL = '/api/image/images/'
+# LOGIN_REDIRECT_URL = '/api/image/images/'
 
 TEMPLATES = [
     {
@@ -74,7 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project_image.wsgi.application'
 
-AUTH_USER_MODEL = "image.User"
+AUTH_USER_MODEL = "app_image.User"
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
