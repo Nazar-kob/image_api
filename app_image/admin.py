@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from app_image.models import Tier, User, OriginalLink
+from app_image.models import Tier, User, ImageData
 
-admin.site.register(OriginalLink)
+admin.site.register(ImageData)
 admin.site.register(Tier)
 
 

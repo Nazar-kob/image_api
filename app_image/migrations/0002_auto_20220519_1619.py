@@ -7,11 +7,12 @@ class Migration(migrations.Migration):
 
     def create_person(apps, schema_editor):
         Tier = apps.get_model('app_image', 'Tier')
-        Tier.objects.create(name='Basic', max_thumbnail_size=200)
-        Tier.objects.create(name='Premium', max_thumbnail_size=400, is_original_link=True)
+        Tier.objects.create(name='Basic', is_thumbnail_200=True)
+        Tier.objects.create(name='Premium', is_thumbnail_200=True, is_thumbnail_400=True)
         Tier.objects.create(
             name='Enterprise',
-            max_thumbnail_size=400,
+            is_thumbnail_200=True,
+            is_thumbnail_400=True,
             is_original_link=True,
             is_time_exist=True
         )

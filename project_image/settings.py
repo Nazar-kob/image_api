@@ -54,7 +54,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'project_image.urls'
 
-# LOGIN_REDIRECT_URL = '/api/image/images/'
+
 
 TEMPLATES = [
     {
