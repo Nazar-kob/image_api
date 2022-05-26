@@ -1,3 +1,5 @@
+import os
+
 from PIL import Image
 from django.db import transaction
 from rest_framework import serializers
@@ -5,76 +7,109 @@ from urllib.request import urlopen
 import urllib.request
 import uuid
 
-from app_image.models import ImageData
+from app_image.models import ImageData, NewImage
 
 
-class ImageDataSerializer(serializers.ModelSerializer):
-    thumbnail_200_link = serializers.ImageField(source="thumbnail_200", read_only=True)
-    thumbnail_400_link = serializers.ImageField(source="thumbnail_400", read_only=True)
-    origin_url = serializers.ImageField(source="origin_image_url", read_only=True)
+class NewImageSerializer(serializers.ModelSerializer):
+    size = serializers.CharField(read_only=True)
+    original_url = serializers.ImageField(
+        source="image_data.original_image",
+        read_only=True
+    )
+
+    class Meta:
+        model = NewImage
+        fields = ("new_image", "size", "original_url")
+
+
+class ImageDataListSerializer(serializers.ModelSerializer):
+    images = NewImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = ImageData
-        fields = ("image_url", "thumbnail_200_link", "thumbnail_400_link", "origin_url")
-
-    @staticmethod
-    def is_valid_url_and_user(url, user):
-        image_formats = ("image/png", "image/jpeg")
-        site = urlopen(url)
-        meta = site.info()
-        if meta["content-type"] not in image_formats:
-            raise serializers.ValidationError("is not valid url")
-
-        if str(user) == "AnonymousUser":
-            raise serializers.ValidationError("you should be sign in")
-
-        return url
-
-    @staticmethod
-    def create_another_thumbnail(file_name, file_size):
-        with Image.open(file_name) as img:
-            file_place = f"image_size_{file_size}/{str(uuid.uuid4())}_{file_size}.jpg"
-            img.thumbnail((file_size, file_size))
-            img.save(file_place)
-
-        return file_place
-
-    def create(self, validated_data):
-        with transaction.atomic():
-            try:
-                image_url = validated_data.get("image_url")
-                user = self.context['request'].user
-
-                image_url = self.is_valid_url_and_user(image_url, user)
-
-                original_image_name = f"img/{str(uuid.uuid4())}.jpg"
-                urllib.request.urlretrieve(image_url, original_image_name)
-
-                img_object = ImageData.objects.create(
-                    image_url=image_url,
-                    origin_image_url=original_image_name,
-                    thumbnail_200=self.create_another_thumbnail(original_image_name, 200),
-                    thumbnail_400=self.create_another_thumbnail(original_image_name, 400),
-                    user=user
-                )
-
-
-
-            except serializers.ValidationError as error:
-                raise serializers.ValidationError(f"{error.args[0]}")
-            except Exception:
-                raise serializers.ValidationError(f"wrong url")
-
-            return img_object
+        fields = ("images", "image_url")
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         get_user_tier = instance.user.tier
-        if not get_user_tier.is_original_link:
-            del representation["origin_url"]
-        if not get_user_tier.is_thumbnail_200:
-            del representation["thumbnail_200_link"]
-        if not get_user_tier.is_thumbnail_400:
-            del representation["thumbnail_400_link"]
+        for image in representation["images"]:
+            if get_user_tier.is_original_link:
+                representation["original_url"] = image["original_url"]
+            representation[f"thumbnail_{image['size']}"] = image["new_image"]
+
+        del representation["images"]
         del representation["image_url"]
+
         return representation
+
+    def create(self, validated_data):
+
+        try:
+            with transaction.atomic():
+                image_url = validated_data.get("image_url")
+                user = self.context["request"].user
+
+                image_url = self.is_valid_url_and_user(image_url, user)
+
+                original_image_name = f"original_img/{str(uuid.uuid4())}.jpg"
+                urllib.request.urlretrieve(image_url, original_image_name)
+
+                image_data_obj = ImageData.objects.create(
+                    image_url=image_url,
+                    original_image=original_image_name,
+                    user=user
+                )
+
+                self.create_another_thumbnail_img(image_data_obj, user)
+        except Exception as error:
+            if error.args:
+                raise serializers.ValidationError(f"{error.args[0]}")
+            raise serializers.ValidationError(
+                'Something is wrong with your "jpg" image URL.'
+            )
+
+        return image_data_obj
+
+    @staticmethod
+    def is_valid_url_and_user(url, user):
+        image_formats = ("image/jpeg",)
+        site = urlopen(url)
+        meta = site.info()
+        if meta["content-type"] not in image_formats:
+            raise serializers.ValidationError(
+                'This URL is not suitable for "jpg" image requests'
+            )
+
+        if str(user) == "AnonymousUser":
+            raise serializers.ValidationError(
+                "You must first sign in before submitting a URL"
+            )
+
+        return url
+
+    @staticmethod
+    def create_another_thumbnail_img(image_data_obj, user):
+        for thumbnail_sizes in user.tier.thumbnail_sizes.all():
+
+            with Image.open(image_data_obj.original_image) as original_img:
+                new_size = int(thumbnail_sizes.size)
+                new_dir = f"new_img_{thumbnail_sizes.size}/"
+
+                if not os.path.isdir(new_dir):
+                    os.mkdir(new_dir)
+
+                new_name_image = str(
+                    image_data_obj.original_image
+                ).replace(
+                    "original_img/", new_dir
+                ).replace(
+                    ".jpg", f"_{new_size}.jpg")
+
+                original_img.thumbnail((new_size, new_size))
+                original_img.save(new_name_image)
+
+            NewImage.objects.create(
+                new_image=new_name_image,
+                size=thumbnail_sizes,
+                image_data=image_data_obj
+            )

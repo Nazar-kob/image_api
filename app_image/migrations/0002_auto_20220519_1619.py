@@ -6,20 +6,26 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     def create_person(apps, schema_editor):
-        Tier = apps.get_model('app_image', 'Tier')
-        Tier.objects.create(name='Basic', is_thumbnail_200=True)
-        Tier.objects.create(name='Premium', is_thumbnail_200=True, is_thumbnail_400=True)
-        Tier.objects.create(
-            name='Enterprise',
-            is_thumbnail_200=True,
-            is_thumbnail_400=True,
-            is_original_link=True,
-            is_time_exist=True
-        )
+        ThumbnailSize = apps.get_model("app_image", "ThumbnailSize")
+        size_200 = ThumbnailSize.objects.create(size=200)
+        size_400 = ThumbnailSize.objects.create(size=400)
 
+        Tier = apps.get_model("app_image", "Tier")
+
+        tier_basic = Tier.objects.create(name="Basic")
+        tier_basic.thumbnail_sizes.add(size_200)
+
+        tier_premium = Tier.objects.create(name="Premium")
+        tier_premium.thumbnail_sizes.add(size_200, size_400)
+
+        tier_enterprise = Tier.objects.create(
+            name="Enterprise",
+            is_original_link=True
+        )
+        tier_enterprise.thumbnail_sizes.add(size_200, size_400)
 
     dependencies = [
-        ('app_image', '0001_initial'),
+        ("app_image", "0001_initial"),
     ]
 
     operations = [

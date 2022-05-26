@@ -1,10 +1,14 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from app_image.models import Tier, User, ImageData
+from app_image.models import Tier, User, ThumbnailSize
 
-admin.site.register(ImageData)
-admin.site.register(Tier)
+admin.site.register(ThumbnailSize)
+
+
+@admin.register(Tier)
+class TierAdmin(admin.ModelAdmin):
+    filter_horizontal = ('thumbnail_sizes',)
 
 
 @admin.register(User)
