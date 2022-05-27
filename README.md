@@ -20,7 +20,7 @@ docker-compose up -d --build
  * password: 12345
 
 
-[Click here to login](http://127.0.0.1:8000/admin/.) \
+[Click here to login](http://127.0.0.1:8000/admin/.)
 ##### Okay, let's open the API 
 [Click here to open the API](http://127.0.0.1:8000/api/image/images/)
 
@@ -31,6 +31,6 @@ https://images.ctfassets.net/hrltx12pl8hq/7yQR5uJhwEkRfjwMFJ7bUK/dc52a0913e8ff8b
 ```
 
 ##### Copy one of these URLs, paste it into this form, and click POST. Then you should see the data as in the picture below.
-![Website interface](screen1.jpg)
+![Website interface](original_img/screen1.jpg)
 ##### However, you can change your plan to admin or create a personal one and choose any size as in the picture below.
-![Website interface](screen2.jpg)
+![Website interface](original_img/screen2.jpg)
