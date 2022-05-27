@@ -43,7 +43,6 @@ class NewImage(models.Model):
 class Tier(models.Model):
     name = models.CharField(max_length=255)
     is_original_link = models.BooleanField(default="False")
-    is_time_exist = models.BooleanField(default="False")
     thumbnail_sizes = models.ManyToManyField(
         ThumbnailSize,
         related_name="tier"
